@@ -5,11 +5,12 @@ commands (host -> MCU)
   keys                   possible values            
   set_contactor          {0,1}                            
   set_connector_lock     {0,1}   
-  set_cp_state           {'A','B','C','D','E','F'}
+  set_state_c            {0,1}
 
 measurements (MCU -> host)
   u_inlet                {0,1,2...}
   cp_duty_cycle          {0,1,..99,100}
+  feedback_connector_lock{0,1}
 
 each newline-terminated and separated by colon.
 
@@ -31,7 +32,7 @@ examples:
 
 
 const int n_average = 10;   // averaging over several read input values
-const int LINE_MAX = 30;    // top limit for msg length
+const int LINE_MAX = 42;    // top limit for msg length
 char in_line[LINE_MAX];     // input line buffer
 int in_len = 0;             // current length of buffer
 
@@ -127,12 +128,10 @@ void process_line(const char *line) {
       // insert code to enable/disble lock motor , separate method for unlocking?
     }
   }
-  else if (strcmp(key, "set_cp_state") == 0) {
-    if (strcmp(value, "B") == 0)      digitalWrite(PIN_CP_MOSFET_OUTPUT, LOW);    // release cp line to +9V
-    else if (strcmp(value, "C") == 0) digitalWrite(PIN_CP_MOSFET_OUTPUT, HIGH);   // pull cp line to +6V
-    else if (strcmp(value, "E") == 0) {} // release connector
-    // ignore other states
-  }
+  else if (strcmp(key, "set_state_c") == 0) {
+    int cmd = (int) value;
+    if (cmd == 1 || cmd == 0) digitalWrite(PIN_CP_MOSFET_OUTPUT, cmd);
+    }
   // else unknown command
 }
 

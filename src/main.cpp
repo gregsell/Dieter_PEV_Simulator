@@ -3,14 +3,14 @@ description of protocol DieterEvDriver <-> Dieter:
 
 commands (host -> MCU)
   keys                   possible values            
-  set_contactor          {0,1}                            
-  set_connector_lock     {0,1}   
-  set_state_c            {0,1}
+  set_contactor             {0,1}                            
+  set_connector_lock        {0,1}   
+  set_state_c               {0,1}
 
 measurements (MCU -> host)
-  u_inlet                {0,1,2...}
-  cp_duty_cycle          {0,1,..99,100}
-  feedback_connector_lock{0,1}
+  u_inlet                   {0,1,2...}
+  cp_duty_cycle             {0,1,..99,100}
+  connector_lock_confirmed  {0,1}
 
 each newline-terminated and separated by colon.
 
@@ -49,13 +49,12 @@ void readInletVoltage() {
     tmp += map(analogRead(PIN_U_INLET_INPUT), 0, 1023 , 0, 1000); // dummy test value, later read from ext ADC
   }
   u_inlet = (int) tmp / n_average;
-  u_inlet = 400;
   // later do SPI/I2C stuff here
 }
 
 void readCpDutyCycle() {
   // three cases to distinguish: logic high, logic low, or 1 kHz PWM
-  unsigned long t = pulseIn(PIN_CP_DUTY_CYCLE_INPUT, HIGH, 3000);
+  unsigned long t = pulseIn(PIN_CP_DUTY_CYCLE_INPUT, HIGH, 3000); // use pulseIn timeout of 3 ms to rule out PWM
   if (t == 0) {
     // constant voltage on cp, as timeout was triggered
     if (digitalRead(PIN_CP_DUTY_CYCLE_INPUT)) cp_duty_cycle = 100; // logic high is treated as duty cycle = 100% 
@@ -75,7 +74,8 @@ void readCpDutyCycle() {
       cp_duty_cycle = -1; 
       return;
     }
-    cp_duty_cycle = (int) tmp / counter;
+    // one period is 1 ms => 50 % duty cycle: 500 us => additional division by ten
+    cp_duty_cycle = (int) tmp / (counter * 10);
   }
 }
 
@@ -87,11 +87,11 @@ void publishMeasurements() {
   // schema:
   // key:value\n
   char s[30];
-  sprintf(s, "u_inlet:%04d", u_inlet);  
+  sprintf(s, "u_inlet:%d", u_inlet);  
   Serial.println(s);
-  sprintf(s, "cp_duty_cycle:%04d", cp_duty_cycle);
+  sprintf(s, "cp_duty_cycle:%d", cp_duty_cycle);
   Serial.println(s);
-  sprintf(s, "feedback_connector_lock:%04d", feedback_connector_lock);
+  sprintf(s, "feedback_connector_lock:%d", feedback_connector_lock);
   Serial.println(s);
 }
 
@@ -154,6 +154,12 @@ void serial_rx_task() {
       }
     }
   }
+}
+
+void dummyValues(){
+  u_inlet = 400;
+  cp_duty_cycle = 5;
+  feedback_connector_lock = 1;
 }
 
 void setup() {

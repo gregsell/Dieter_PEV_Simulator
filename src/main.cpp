@@ -80,7 +80,9 @@ void readCpDutyCycle() {
 }
 
 void readConnLockFB() {
-  feedback_connector_lock = digitalRead(PIN_CONNECTOR_LOCK_FB);
+  // internal pullup resistor
+  // for now assume low-side closing switch
+  //connector_lock_confirmed = !digitalRead(PIN_CONNECTOR_LOCK_FB);
 }
 
 void publishMeasurements() {
@@ -108,8 +110,10 @@ void handle_set_contactor(char currentLine[20]) {
 
 void process_line(const char *line) {
   char* separator = strchr(line, ':');
-  if (separator == nullptr) return; // found no ':'
-
+  if (separator == nullptr) {
+    Serial.println("invalid syntax");
+    return; // found no ':'
+  }
   // extract key
   int keyLen = separator - line; // key length by substracting memory adresses
   char key[32];
@@ -119,19 +123,21 @@ void process_line(const char *line) {
   char* value = separator + 1;
 
   if (strcmp(key, "set_contactor") == 0) {
-    int cmd = (int) value;
+    int cmd = atoi(value);
     if (cmd == 1 || cmd == 0) digitalWrite(PIN_POWER_RELAY_OUTPUT, cmd);
   } 
   else if (strcmp(key, "set_connector_lock") == 0) {
-    int cmd = (int) value;
+    int cmd = atoi(value);
+    Serial.print("Dieter cmd: "); Serial.println(cmd);
     if (cmd == 1 || cmd == 0) {
       // insert code to enable/disble lock motor , separate method for unlocking?
     }
   }
   else if (strcmp(key, "set_state_c") == 0) {
-    int cmd = (int) value;
+    int cmd = atoi(value);
     if (cmd == 1 || cmd == 0) digitalWrite(PIN_CP_MOSFET_OUTPUT, cmd);
     }
+else Serial.println("unknown command");
   // else unknown command
 }
 

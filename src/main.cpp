@@ -40,7 +40,7 @@ uint32_t lasttime_500ms = 0;
 
 int u_inlet;                // DC voltage measured at HV connect, before relays
 int cp_duty_cycle;          // duty cycle of C_p line
-int feedback_connector_lock;// feedback switch status from CCS connector lock
+int connector_lock_confirmed = 0;// feedback switch status from CCS connector lock
 
 void readInletVoltage() {
   float tmp = 0;
@@ -93,7 +93,7 @@ void publishMeasurements() {
   Serial.println(s);
   sprintf(s, "cp_duty_cycle:%d", cp_duty_cycle);
   Serial.println(s);
-  sprintf(s, "feedback_connector_lock:%d", feedback_connector_lock);
+  sprintf(s, "connector_lock_confirmed:%d", connector_lock_confirmed);
   Serial.println(s);
 }
 
@@ -165,7 +165,7 @@ void serial_rx_task() {
 void dummyValues(){
   u_inlet = 400;
   cp_duty_cycle = 5;
-  feedback_connector_lock = 1;
+  //connector_lock_confirmed = 1;
 }
 
 void setup() {

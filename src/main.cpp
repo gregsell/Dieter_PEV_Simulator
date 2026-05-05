@@ -111,17 +111,6 @@ void publishMeasurements() {
   Serial.println(s);
 }
 
-void handle_set_contactor(char currentLine[20]) {
-  int tmp;
-  bool en = false;
-  sscanf(currentLine, " %*[^:]:%d", &tmp); 
-  en = (tmp != 0); 
-  // en = (tmp == 0) ? 0 : 1;
-  //HW_allowContactor(en);
-  Serial.print("Setting contactor enable to ");
-  Serial.println(en);
-}
-
 void process_line(const char *line) {
   char* separator = strchr(line, ':');
   if (separator == nullptr) {

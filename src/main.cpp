@@ -30,13 +30,27 @@ examples:
 # define PIN_POWER_RELAY_OUTPUT 10
 # define PIN_CP_MOSFET_OUTPUT 12
 
+# define PIN_MOTOR_DRIVER_A 4
+# define PIN_MOTOR_DRIVER_B 5
 
-const int n_average = 10;   // averaging over several read input values
+const unsigned long LOCK_TIMEOUT_MS = 600; // time-based control (not current)
+const int N_AVERAGE = 10;   // averaging over several read input values
 const int LINE_MAX = 42;    // top limit for msg length
+
 char in_line[LINE_MAX];     // input line buffer
 int in_len = 0;             // current length of buffer
 
-uint32_t lasttime_500ms = 0;
+// states of lock motor
+enum class LockState {
+  IDLE,
+  LOCKING,
+  UNLOCKING
+};
+// keep track of what lock motor is doing
+LockState lock_state = LockState::IDLE;
+
+unsigned long lasttime_500ms = 0;
+unsigned long lock_timer_start = 0;
 
 int u_inlet;                // DC voltage measured at HV connect, before relays
 int cp_duty_cycle;          // duty cycle of C_p line
@@ -130,7 +144,15 @@ void process_line(const char *line) {
     int cmd = atoi(value);
     Serial.print("Dieter cmd: "); Serial.println(cmd);
     if (cmd == 1 || cmd == 0) {
-      // insert code to enable/disble lock motor , separate method for unlocking?
+      // drive differential pins of L298N input
+      // (enable of L298N is pulled high => always max speed)
+      digitalWrite(PIN_MOTOR_DRIVER_A, cmd);
+      digitalWrite(PIN_MOTOR_DRIVER_B, !cmd);
+      lock_state = cmd==1 ? LockState::LOCKING : LockState::UNLOCKING; // set lock motor state variable
+      // REMOVE LATER
+      connector_lock_confirmed = cmd; // for testing
+      pinMode(5, OUTPUT);   // small LED
+      digitalWrite(5, connector_lock_confirmed);
     }
   }
   else if (strcmp(key, "set_state_c") == 0) {
@@ -139,6 +161,16 @@ void process_line(const char *line) {
     }
 else Serial.println("unknown command");
   // else unknown command
+}
+
+void connector_lock_task() {
+  if (millis() - lock_timer_start >= LOCK_TIMEOUT_MS) {
+    // set both inputs equal, this stops motor (see L298 datasheet)
+    digitalWrite(PIN_MOTOR_DRIVER_A, 0);
+    digitalWrite(PIN_MOTOR_DRIVER_B, 0);
+    readConnLockFB();
+    lock_state = LockState::IDLE;
+  }
 }
 
 void serial_rx_task() {
@@ -171,11 +203,14 @@ void dummyValues(){
 void setup() {
   pinMode(PIN_POWER_RELAY_OUTPUT, OUTPUT);
   pinMode(PIN_CP_MOSFET_OUTPUT, OUTPUT);
-  pinMode(PIN_CONNECTOR_LOCK_FB, INPUT_PULLUP);
-  pinMode(PIN_CP_DUTY_CYCLE_INPUT, INPUT);
+  pinMode(PIN_MOTOR_DRIVER_A, OUTPUT);
+  pinMode(PIN_MOTOR_DRIVER_B, OUTPUT);
   
   digitalWrite(PIN_POWER_RELAY_OUTPUT, 0);
   digitalWrite(PIN_CP_MOSFET_OUTPUT,0);
+
+  pinMode(PIN_CONNECTOR_LOCK_FB, INPUT_PULLUP);
+  pinMode(PIN_CP_DUTY_CYCLE_INPUT, INPUT);
 
   analogReference(INTERNAL);
 
@@ -190,6 +225,7 @@ void loop() {
   readConnLockFB();
 
   serial_rx_task();
+  connector_lock_task();
 
   if ((millis() - lasttime_500ms)>500) {
     lasttime_500ms = millis();

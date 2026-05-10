@@ -25,11 +25,11 @@ examples:
 
 # define PIN_U_INLET_INPUT A0
 # define PIN_CP_DUTY_CYCLE_INPUT 7
-# define PIN_CONNECTOR_LOCK_FB 6
+# define PIN_CONNECTOR_LOCK_FB 9
 
-# define PIN_POWER_RELAY_OUTPUT 10
-# define PIN_CP_MOSFET_OUTPUT 12
-
+# define PIN_POWER_RELAY_OUTPUT 6
+# define PIN_CP_MOSFET_OUTPUT 8
+// 3 contactor FB
 # define PIN_MOTOR_DRIVER_A 4
 # define PIN_MOTOR_DRIVER_B 5
 
@@ -59,10 +59,10 @@ int connector_lock_confirmed = 0;// feedback switch status from CCS connector lo
 void readInletVoltage() {
   float tmp = 0;
   // averaging ADC readings
-  for (int i = 0; i < n_average; i++) {
+  for (int i = 0; i < N_AVERAGE; i++) {
     tmp += map(analogRead(PIN_U_INLET_INPUT), 0, 1023 , 0, 1000); // dummy test value, later read from ext ADC
   }
-  u_inlet = (int) tmp / n_average;
+  u_inlet = (int) tmp / N_AVERAGE;
   // later do SPI/I2C stuff here
 }
 
@@ -77,7 +77,7 @@ void readCpDutyCycle() {
   else { // else there is a "true" PWM
     float tmp = 0;
     // averaging PWM
-    int counter = n_average;
+    int counter = N_AVERAGE;
     for (int i = 0; i < counter; i++) {
       int raw = pulseIn(PIN_CP_DUTY_CYCLE_INPUT, HIGH, 2000);
       if (raw == 0) counter--; // in case of timeout the reading is omitted

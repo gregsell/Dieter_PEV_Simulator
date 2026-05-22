@@ -21,9 +21,15 @@ examples:
 */
 
 #include <Arduino.h>
+#include <SPI.h>
+#include <ADS1118.h>
 
 
-# define PIN_U_INLET_INPUT A0
+# define PIN_CURR_SENSE A0
+// resistances of voltge divider; refer to schematic
+# define CURR_SENSE_R14 4700
+# define CURR_SENSE_R12 4700
+
 # define PIN_CP_DUTY_CYCLE_INPUT 7
 # define PIN_CONNECTOR_LOCK_FB 9
 
@@ -32,6 +38,12 @@ examples:
 // 3 contactor FB
 # define PIN_MOTOR_DRIVER_A 4
 # define PIN_MOTOR_DRIVER_B 5
+// chip select for SPI comm with ADS
+# define PIN_CS_ADS1118 10
+
+ADS1118 ads1118(PIN_CS_ADS1118);
+
+
 
 const unsigned long LOCK_TIMEOUT_MS = 600; // time-based control (not current)
 const int N_AVERAGE = 10;   // averaging over several read input values
@@ -53,6 +65,7 @@ unsigned long lasttime_500ms = 0;
 unsigned long lock_timer_start = 0;
 
 int u_inlet;                // DC voltage measured at HV connect, before relays
+float current;              // DC current on HV lines
 int cp_duty_cycle;          // duty cycle of C_p line
 int connector_lock_confirmed = 0;// feedback switch status from CCS connector lock
 
@@ -60,10 +73,18 @@ void readInletVoltage() {
   float tmp = 0;
   // averaging ADC readings
   for (int i = 0; i < N_AVERAGE; i++) {
-    tmp += map(analogRead(PIN_U_INLET_INPUT), 0, 1023 , 0, 1000); // dummy test value, later read from ext ADC
+    //tmp += map(analogRead(PIN_U_INLET_INPUT), 0, 1023 , 0, 1000); // dummy test value, later read from ext ADC
+    tmp += ads1118.getMilliVolts();
   }
   u_inlet = (int) tmp / N_AVERAGE;
   // later do SPI/I2C stuff here
+}
+
+// measure current from clamp sensor
+void readCurrent() {
+  int raw = analogRead(PIN_CURR_SENSE);
+  // 10 bit ADC resolution; remap to 5V range and scale according to resistor divider
+  current = raw * 5.0 / 1023 * CURR_SENSE_R12 / (CURR_SENSE_R12 + CURR_SENSE_R14);
 }
 
 void readCpDutyCycle() {
@@ -104,6 +125,10 @@ void publishMeasurements() {
   // key:value\n
   char s[30];
   sprintf(s, "u_inlet:%d", u_inlet);  
+  Serial.println(s);
+  char tmp[6];  
+  dtostrf( current, 4, 2, tmp);    // arduino boards can't do sprintf with %f
+  sprintf(s, "current:%s", tmp);  
   Serial.println(s);
   sprintf(s, "cp_duty_cycle:%d", cp_duty_cycle);
   Serial.println(s);
@@ -205,11 +230,20 @@ void setup() {
 
   Serial.begin(19200);
   
+  /* Changing the sampling rate. RATE_8SPS, RATE_16SPS, RATE_32SPS, RATE_64SPS, RATE_128SPS, RATE_250SPS, RATE_475SPS, RATE_860SPS*/
+  ads1118.setSamplingRate(ads1118.RATE_16SPS);
+  /* Changing the input selected. Differential inputs: DIFF_0_1, DIFF_0_3, DIFF_1_3, DIFF_2_3. Single ended input: AIN_0, AIN_1, AIN_2, AIN_3*/
+  ads1118.setInputSelected(ads1118.AIN_3);
+  /* Changing the full scale range. 
+    *  FSR_6144 (±6.144V)*, FSR_4096(±4.096V)*, FSR_2048(±2.048V), FSR_1024(±1.024V), FSR_0512(±0.512V), FSR_0256(±0.256V).
+    *  (*) No more than VDD + 0.3 V must be applied to this device. 
+    */
+  ads1118.setFullScaleRange(ads1118.FSR_6144);
 }
 
 void loop() {
   
-  readInletVoltage();
+  readCurrent();
   readCpDutyCycle();
   readConnLockFB();
 

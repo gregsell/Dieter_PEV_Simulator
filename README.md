@@ -1,6 +1,11 @@
-# dieter PEV simulator
+# dieter for EVerest PEV simulator
+The EVerest PEV Simulator project documentation is split in two repositories:
+1. the EVerest software running on linux, available [here](https://github.com/gregsell/DieterEvDriver/)
+2. this repo: electronics and firmware of the "Dieter" handling low level communication - *" Device Interface ElecTronic Especially not limited to Raspberry"*
 
-**Hardware and Firmware for the Dieter PEV Simulator Board**
+*add reference to whole BA?*
+
+## Hardware and Firmware for the Dieter PEV Simulator Board
 
 This board is a physical interface between the [EVerest PEV Simulator](https://github.com/gregsell/DieterEvDriver/) software running on linux and a real CCS charging station. It generates and measures the IEC 61851 Control Pilot (CP) signal, drives the contactor and plug lock, and measures current and voltage on the HV lines.
 The board is designed for DC charging test setups and capable of handling very high voltages.
@@ -22,7 +27,8 @@ The Arduino handles all low-level I/O relevant for CCS communication:
 - **Connector lock actuator**: Engages/releases the mechanical connector lock
 - **Power meter**: Measures HV voltage and current
 
-The Arduino communicates with the Linux host over UART via USB using a simple text-based protocol, as implemented in the [`DieterEvDriver`](https://github.com/gregsell/DieterEvDriver/tree/main/modules/DieterEvDriver) EVerest module.
+The Arduino communicates with the linux host over UART via USB using a simple text-based protocol, as implemented in the [`DieterEvDriver`](https://github.com/gregsell/DieterEvDriver/tree/main/modules/DieterEvDriver) EVerest module.
+All the logic runs on the linux host. This board simply executes its commands and reads back measurements.
 
 ### HomePlug PLC Modem
 
@@ -32,6 +38,7 @@ The modem connects to the CP line and handles the high-level communication neces
 
 
 ## Repository Structure
+soll das weg? VV
 ```
 ├── docs
 │   ├── mounting                                    # 3d printable files of DIN rail mounts
@@ -51,7 +58,6 @@ The modem connects to the CP line and handles the high-level communication neces
     └── main.cpp                                    # sourcecode
 ```
 
----
 
 ## Arduino Serial Protocol
 The Arduino exposes a simple newline-delimited text protocol over serial. The `DieterEvDriver` EVerest module running on the linux host speaks this protocol.
@@ -75,9 +81,9 @@ examples:
   "set_cp_state:C\n"
   "u_inlet:800\n"
 ```
-**notes:**
+**Notes:**
 - `current` is the only `float`, all the others are `integer`
-- `set_state_c` might be misleading. In general there are more states, but this is the only one the EV can signal.
+- `set_state_c` might be misleading. In general there are more states, but this is the only one the EV can signal. (B <-> C)
 - EVerest itself does not need current and voltage measurements
 
 ## Mounting
@@ -92,9 +98,10 @@ Each clip can hold up to three M3 nuts spaced 9 mm apart and can be attached (an
 
 ## Related Projects and useful links
 
-- [gregsell/EVerest PEV simulator]() — EVerest software that runs on the host and controls this board
-- [uhi22/dieter](https://github.com/uhi22/dieter) — Original Dieter reference hardware and pyPLC-based software
-- [uhi22/pyPLC](https://github.com/uhi22/pyPLC) — Python PLC/V2G stack, first open-source CCS implementation
-- [uhi22/foccci](https://github.com/uhi22/foccci) — open-source CCS controller, developed by openinverter community
+- [uhi22/dieter](https://github.com/uhi22/dieter) — Original "Dieter" hardware firmware
+- [uhi22/pyPLC](https://github.com/uhi22/pyPLC) — Python PLC/V2G stack, first open-source CCS implementation, also the hardware of the original "Dieter"
+- [uhi22/foccci](https://github.com/uhi22/foccci) — open-source CCS controller, developed by openinverter community, runs a port of pyPLC
 - [EVerest](https://github.com/EVerest/everest-core) — EV charging framework
-- [charIn CCS design guide](https://www.charin.global/media/pages/technology/ccs-specification/c07034e41e-1626949173/design_guide_combined_charging_system_v7.pdf) — very useful! (Almost) everything you ever need to know about CCS
+- [charIn CCS design guide](https://www.charin.global/media/pages/technology/ccs-specification/c07034e41e-1626949173/design_guide_combined_charging_system_v7.pdf) — very useful. (Almost) everything you ever need to know about CCS
+- [discussion on openinverter](https://openinverter.org/forum/viewtopic.php?p=37085) — beginnings of development
+- [open-plc-utils](https://github.com/qca/open-plc-utils) — toolkit for patching PLC modem

@@ -48,7 +48,7 @@ ADS1118 ads1118(PIN_CS_ADS1118);
 
 const unsigned long PUBLISH_INTERVAL_MS = 500;
 
-const unsigned long LOCK_TIMEOUT_MS = 600; // time-based control (not current) of connector lock motor
+const unsigned long LOCK_TIMEOUT_MS = 400; // time-based control (not current) of connector lock motor
 
 const int N_AVERAGE = 10;   // averaging over several read input values
 
@@ -124,7 +124,7 @@ void readCpDutyCycle() {
 void readConnLockFB() {
   // internal pullup resistor
   // for now assume low-side closing switch
-  //connector_lock_confirmed = !digitalRead(PIN_CONNECTOR_LOCK_FB);
+  connector_lock_confirmed = digitalRead(PIN_CONNECTOR_LOCK_FB)==HIGH ? 1 : 0;
 }
 
 // publish all measurements via UART
@@ -163,19 +163,19 @@ void process_line(const char *line) {
   if (strcmp(key, "set_contactor") == 0) {
     int cmd = atoi(value);
     if (cmd == 1 || cmd == 0) digitalWrite(PIN_POWER_RELAY_OUTPUT, cmd);
+    // for testing small 5V relais were used.
+    // when proper contactors are used the auxiliary switch should be read in to rule out welded contacts
+    // the reserved pin is PIN_POWER_RELAY_FB
   } 
   else if (strcmp(key, "set_connector_lock") == 0) {
     int cmd = atoi(value);
     if (cmd == 1 || cmd == 0) {
       // drive differential pins of L298N input
       // (enable of L298N is pulled high => always max speed)
-      digitalWrite(PIN_MOTOR_DRIVER_A, cmd);
-      digitalWrite(PIN_MOTOR_DRIVER_B, !cmd);
-      lock_state = cmd==1 ? LockState::LOCKING : LockState::UNLOCKING; // set lock motor state variable
-      // REMOVE LATER
-      connector_lock_confirmed = cmd; // for testing
-      pinMode(5, OUTPUT);   // small LED
-      digitalWrite(5, connector_lock_confirmed);
+      digitalWrite(PIN_MOTOR_DRIVER_A, !cmd);
+      digitalWrite(PIN_MOTOR_DRIVER_B, cmd);
+      lock_state = cmd==1 ? LockState::LOCKING : LockState::UNLOCKING; 
+      lock_timer_start = millis();
     }
   }
   else if (strcmp(key, "set_state_c") == 0) {
@@ -191,8 +191,8 @@ void process_line(const char *line) {
 void connector_lock_task() {
   if (millis() - lock_timer_start >= LOCK_TIMEOUT_MS) {
     // set both inputs equal, this stops motor (see L298 datasheet)
-    digitalWrite(PIN_MOTOR_DRIVER_A, 0);
-    digitalWrite(PIN_MOTOR_DRIVER_B, 0);
+    digitalWrite(PIN_MOTOR_DRIVER_A, LOW);
+    digitalWrite(PIN_MOTOR_DRIVER_B, LOW);
     readConnLockFB();
     lock_state = LockState::IDLE;
   }
@@ -242,7 +242,7 @@ void setup() {
   analogReference(INTERNAL);
 
   Serial.begin(19200);
-
+  
   /* Changing the sampling rate. RATE_8SPS, RATE_16SPS, RATE_32SPS, RATE_64SPS, RATE_128SPS, RATE_250SPS, RATE_475SPS, RATE_860SPS*/
   ads1118.setSamplingRate(ads1118.RATE_16SPS);
   /* Changing the input selected. Differential inputs: DIFF_0_1, DIFF_0_3, DIFF_1_3, DIFF_2_3. Single ended input: AIN_0, AIN_1, AIN_2, AIN_3*/
@@ -252,11 +252,13 @@ void setup() {
     *  (*) No more than VDD + 0.3 V must be applied to this device. 
     */
   ads1118.setFullScaleRange(ads1118.FSR_6144);
+  Serial.println("ads setup done");
+  //Serial.println(String(ads1118.getTemperature(),6)+" C"); //Getting temperature of the internal sensor
 }
 
 void loop() {
 
-  readInletVoltage();
+  //readInletVoltage();
   readCurrent();
   readCpDutyCycle();
   readConnLockFB();

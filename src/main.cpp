@@ -162,7 +162,10 @@ void process_line(const char *line) {
 
   if (strcmp(key, "set_contactor") == 0) {
     int cmd = atoi(value);
-    if (cmd == 1 || cmd == 0) digitalWrite(PIN_POWER_RELAY_OUTPUT, cmd);
+    if (cmd == 1 || cmd == 0)  {
+      digitalWrite(PIN_POWER_RELAY_OUTPUT, (cmd==1) ? LOW : HIGH);
+    }
+    
     // for testing small 5V relais were used.
     // when proper contactors are used the auxiliary switch should be read in to rule out welded contacts
     // the reserved pin is PIN_POWER_RELAY_FB
@@ -233,8 +236,8 @@ void setup() {
   pinMode(PIN_MOTOR_DRIVER_A, OUTPUT);
   pinMode(PIN_MOTOR_DRIVER_B, OUTPUT);
 
-  digitalWrite(PIN_POWER_RELAY_OUTPUT, 0);
-  digitalWrite(PIN_CP_MOSFET_OUTPUT,0);
+  digitalWrite(PIN_POWER_RELAY_OUTPUT, HIGH); // active low
+  digitalWrite(PIN_CP_MOSFET_OUTPUT,LOW);
 
   pinMode(PIN_CONNECTOR_LOCK_FB, INPUT_PULLUP);
   pinMode(PIN_CP_DUTY_CYCLE_INPUT, INPUT);

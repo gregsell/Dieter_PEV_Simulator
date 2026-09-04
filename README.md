@@ -78,7 +78,6 @@ each newline-terminated and separated by colon.
 
 examples:
   "set_contactor:0\n"
-  "set_cp_state:C\n"
   "u_inlet:800\n"
 ```
 **Notes:**
@@ -101,7 +100,7 @@ Each clip can hold up to three M3 nuts spaced 9 mm apart and can be attached (an
 - [uhi22/dieter](https://github.com/uhi22/dieter) — Original "Dieter" hardware firmware
 - [uhi22/pyPLC](https://github.com/uhi22/pyPLC) — Python PLC/V2G stack, first open-source CCS implementation, also the hardware of the original "Dieter"
 - [uhi22/foccci](https://github.com/uhi22/foccci) — open-source CCS controller, developed by openinverter community, runs a port of pyPLC
+- [discussion on openinverter](https://openinverter.org/forum/viewtopic.php?p=37085) — homeplug investigations, beginnings of pyPLC
 - [EVerest](https://github.com/EVerest/everest-core) — EV charging framework
 - [charIn CCS design guide](https://www.charin.global/media/pages/technology/ccs-specification/c07034e41e-1626949173/design_guide_combined_charging_system_v7.pdf) — very useful. (Almost) everything you ever need to know about CCS
-- [discussion on openinverter](https://openinverter.org/forum/viewtopic.php?p=37085) — beginnings of development
 - [open-plc-utils](https://github.com/qca/open-plc-utils) — toolkit for patching PLC modem

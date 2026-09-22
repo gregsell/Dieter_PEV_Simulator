@@ -1,9 +1,11 @@
 # dieter for EVerest PEV simulator
 The EVerest PEV Simulator project documentation is split in two repositories:
-1. the EVerest software running on linux, available [here](https://github.com/gregsell/DieterEvDriver/)
+1. the EVerest software running on linux, available at [gregsell/DieterEvDriver](https://github.com/gregsell/DieterEvDriver/)
 2. this repo: electronics and firmware of the "Dieter" handling low level communication - *" Device Interface ElecTronic Especially not limited to Raspberry"*
 
-*add reference to whole BA?*
+demo: https://youtu.be/5YWvrdBq7K8?si=sz70jL9PTbtog_6K  
+An essay covering the whole project is available under [gregsell/DieterEvDriver/docs/](https://github.com/gregsell/DieterEvDriver/) in english and german.  
+
 
 ## Hardware and Firmware for the Dieter PEV Simulator Board
 
@@ -32,31 +34,10 @@ All the logic runs on the linux host. This board simply executes its commands an
 
 ### HomePlug PLC Modem
 
-In this project a patched TPlink TL-PA4010P v5.0 used. (In the pyPLC project several modems were tested, see https://github.com/uhi22/pyPLC/blob/master/doc/hardware.md.) The necessary modification steps are available there as well.   
+In this project a patched TPlink TL-PA4010P v5.0 used (chipset: AR7420). (In the pyPLC project several modems were tested, see https://github.com/uhi22/pyPLC/blob/master/doc/hardware.md) The necessary modification steps are available there as well.   
 
 The modem connects to the CP line and handles the high-level communication necessary for CCS. The Linux host runs `EvSlac` (EVerest module) for SLAC matching and PyEvJosev for the V2G ISO 15118-2 session over PLC.
 
-
-## Repository Structure
-soll das weg? VV
-```
-├── docs
-│   ├── mounting                                    # 3d printable files of DIN rail mounts
-│   │   ├── Dieter_box_DIN_rail_adapter.step
-│   │   ├── L298N_board_DIN_rail_adapter.step
-│   │   └── TL-PA4010P_v5.0_DIN_rail_adapter.step
-│   ├── pcb                                         # KiCAD source files of PCB
-│   │   ├── Dieter_PEV_Simulator.kicad_pcb
-│   │   ├── Dieter_PEV_Simulator.kicad_pro
-│   │   └── Dieter_PEV_Simulator.kicad_sch
-│   ├── pdf                                         # pdf schematic
-│   │   └── Dieter_PEV_Simulator_schematic.pdf
-│   └── sys_arch_hw.svg
-├── platformio.ini                                  # platformio configuration file
-├── README.md                                       # this file
-└── src
-    └── main.cpp                                    # sourcecode
-```
 
 
 ## Arduino Serial Protocol
